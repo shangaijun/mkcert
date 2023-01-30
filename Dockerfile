@@ -1,6 +1,6 @@
 FROM debian:bullseye-slim
 CMD ["bash"]
-LABEL maintainer=shangaijun@aliyun.com
+LABEL maintainer=<email_address>
 ENV DEBUG=false 
 ENV DOCKER_HOST=unix:///var/run/docker.sock
 ENV CAROOT=/app/ca
