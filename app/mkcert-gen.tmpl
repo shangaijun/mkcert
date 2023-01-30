@@ -1,0 +1,36 @@
+#!/bin/bash
+
+source /app/functions.sh
+
+[[ $DEBUG == true ]] && set -x
+
+# Mimic Let's encrypt structure
+function gen {
+    CERT_FILE="./self-signed.crt"
+    KEY_FILE="./self-signed.key"
+    FILE="domains.txt"
+    old_domains=""
+
+    domains=$(printf '%s\n' "$@" |sort | xargs)
+    if [ -f "$FILE" ]; then
+        old_domains=$(cat $FILE | xargs)
+    fi
+
+    if [ "$domains" = "$old_domains" ]; then
+        echo "Domains not changed."
+    else
+        echo "Domains changed."
+        echo $domains > $FILE
+        mkcert -cert-file ${CERT_FILE} -key-file ${KEY_FILE} $domains
+        reload_nginx
+    fi
+    
+    [ -f ./dhparam.pem ] && [ ! -f $1.dhparam.pem ] && ln -s ./dhparam.pem $1.dhparam.pem
+}
+
+gen \
+{{ range $hosts, $containers := groupBy $ "Env.VIRTUAL_HOST" }}
+{{ $hosts := split (trimSuffix "," $hosts) "," }}
+{{ range $host := $hosts }}{{ $host := trim $host }} '{{ $host }}' {{ end }} \
+{{ end }}
+127.0.0.1 localhost
